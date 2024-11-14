@@ -51,7 +51,7 @@ class MainActivity : AppCompatActivity() {
                 isTimerRunning = false
             } else {
                 // just start timerBinder
-                timerBinder.start(10)  // 10 sec as start value
+                timerBinder.start(100)  // that number sec as start value
                 isTimerRunning = true
             }
 
