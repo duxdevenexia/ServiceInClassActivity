@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Binder
 import android.os.Handler
 import android.os.IBinder
+import android.os.Message
 import android.util.Log
 
 @Suppress("ControlFlowWithEmptyBody")
@@ -18,6 +19,7 @@ class TimerService : Service() {
 
     private var paused = false
 
+    // TimerBinder inner class, by TimerThread to execute timer logic
     inner class TimerBinder : Binder() {
 
         // Check if Timer is already running
@@ -38,6 +40,7 @@ class TimerService : Service() {
             }
         }
 
+        // set Handle, which handling UI renew
         fun setHandler(handler: Handler) {
             timerHandler = handler
         }
@@ -63,20 +66,22 @@ class TimerService : Service() {
     }
 
     override fun onBind(intent: Intent): IBinder {
+        // return TimerBinder, which allow to interact with outside
         return TimerBinder()
     }
 
     fun start(startValue: Int) {
         t = TimerThread(startValue)
-        t.start()
+        t.start()           //  start TimerThread
     }
 
     fun pause () {
         if (::t.isInitialized) {
-            paused = !paused
+            paused = !paused        // switch to paused status
             isRunning = !paused
         }
     }
+
 
     inner class TimerThread(private val startValue: Int) : Thread() {
 
@@ -86,10 +91,14 @@ class TimerService : Service() {
                 for (i in startValue downTo 1)  {
                     Log.d("Countdown", i.toString())
 
-                    timerHandler?.sendEmptyMessage(i)
+                    //timerHandler?.sendEmptyMessage(i)
+                    // use Handler send thread massage to UI
+                    timerHandler?.sendMessage(Message.obtain().apply {
+                        what = i  // save  number
+                    })
 
-                    while (paused);
-                    sleep(1000)
+                    while (paused); // waiting for paused status canceled
+                    sleep(1000) // renew per 1 sec
 
                 }
                 isRunning = false
@@ -113,6 +122,7 @@ class TimerService : Service() {
     override fun onDestroy() {
         super.onDestroy()
 
+        timerHandler?.sendEmptyMessage(0)
         Log.d("TimerService status", "Destroyed")
     }
 
